@@ -68,45 +68,50 @@ function onSubmit(e) {
   }
 }
 
+const lightbox = new SimpleLightbox('.gallery-item-image a', {
+  captionsData: 'alt',
+  captionDelay: 250,
+});
+
 function onLoadMore() {
   page += 1;
   galleryRenderer.moreBtn.disabled = true;
   galleryRenderer.moreBtn.classList.remove('is-visible');
   galleryRenderer.loader.classList.add('is-visible');
 
-  getImages(currentQuery, page).then(data => {
-    galleryRenderer.gallery.insertAdjacentHTML(
-      'beforeend',
-      createMarkup(data.hits)
-    );
-    galleryRenderer.moreBtn.disabled = false;
-    galleryRenderer.moreBtn.classList.add('is-visible');
-    galleryRenderer.loader.classList.remove('is-visible');
-
-    if (data.totalHits >= itemsPerPage * page) {
+  getImages(currentQuery, page)
+    .then(data => {
+      galleryRenderer.gallery.insertAdjacentHTML(
+        'beforeend',
+        createMarkup(data.hits)
+      );
+      galleryRenderer.moreBtn.disabled = false;
       galleryRenderer.moreBtn.classList.add('is-visible');
-      const galleryCard = document.querySelector('.gallery-item');
-      const cardHeight = galleryCard.getBoundingClientRect().height;
-      window.scrollBy({
-        left: 0,
-        top: cardHeight * 2,
-        behavior: 'smooth',
-      });
-      return;
-    }
-    galleryRenderer.moreBtn.classList.remove('is-visible');
-    iziToast.show({
-      message: `❌ We're sorry, but you've reached the end of search results.`,
-      color: 'red',
-      position: 'topRight',
-      timeout: 2000,
-      progressBar: false,
-    });
-    lightbox.refresh();
-  });
-}
+      galleryRenderer.loader.classList.remove('is-visible');
 
-const lightbox = new SimpleLightbox('.gallery-item-image a', {
-  captionsData: 'alt',
-  captionDelay: 250,
-});
+      if (data.totalHits >= itemsPerPage * page) {
+        galleryRenderer.moreBtn.classList.add('is-visible');
+        const galleryCard = document.querySelector('.gallery-item');
+        const cardHeight = galleryCard.getBoundingClientRect().height;
+        window.scrollBy({
+          left: 0,
+          top: cardHeight * 2,
+          behavior: 'smooth',
+        });
+        lightbox.refresh();
+
+        return;
+      }
+      galleryRenderer.moreBtn.classList.remove('is-visible');
+      iziToast.show({
+        message: `❌ We're sorry, but you've reached the end of search results.`,
+        color: 'red',
+        position: 'topRight',
+        timeout: 2000,
+        progressBar: false,
+      });
+    })
+    .catch(error => {
+      alert(error.message);
+    });
+}
