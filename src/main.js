@@ -25,6 +25,7 @@ function onSubmit(e) {
     .toLowerCase();
   currentQuery = searchQuery;
   if (!searchQuery) {
+    galleryRenderer.moreBtn.classList.remove('is-visible');
     iziToast.show({
       message: '❌ Please enter a search query',
       color: 'red',
