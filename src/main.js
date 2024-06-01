@@ -5,6 +5,22 @@ import 'simplelightbox/dist/simple-lightbox.min.css';
 import { getImages, itemsPerPage } from './js/pixabay-api';
 import createMarkup from './js/render-functions';
 
+const showLoadMore = () => {
+  galleryRenderer.moreBtn.classList.add('is-visible');
+  galleryRenderer.moreBtn.disabled = false;
+};
+const hideLoadMore = () => {
+  galleryRenderer.moreBtn.classList.remove('is-visible');
+  galleryRenderer.moreBtn.disabled = true;
+};
+
+const showLoader = () => {
+  galleryRenderer.loader.classList.add('is-visible');
+};
+const hideLoader = () => {
+  galleryRenderer.loader.classList.remove('is-visible');
+};
+
 const galleryRenderer = {
   form: document.querySelector('.search-form'),
   gallery: document.querySelector('.gallery'),
@@ -14,8 +30,10 @@ const galleryRenderer = {
 
 galleryRenderer.form.addEventListener('submit', onSubmit);
 galleryRenderer.moreBtn.addEventListener('click', onLoadMore);
+
 let currentQuery = '';
 let page;
+
 function onSubmit(e) {
   page = 1;
   e.preventDefault();
@@ -25,7 +43,7 @@ function onSubmit(e) {
     .toLowerCase();
   currentQuery = searchQuery;
   if (!searchQuery) {
-    galleryRenderer.moreBtn.classList.remove('is-visible');
+    hideLoadMore();
     iziToast.show({
       message: '❌ Please enter a search query',
       color: 'red',
@@ -35,12 +53,11 @@ function onSubmit(e) {
     });
   } else {
     galleryRenderer.form.reset();
-    galleryRenderer.loader.classList.add('is-visible');
-
+    showLoader();
     getImages(searchQuery, page)
       .then(data => {
         if (!data.hits.length) {
-          galleryRenderer.loader.classList.remove('is-visible');
+          hideLoader();
           iziToast.show({
             message:
               '❌ Sorry, there are no images matching your search query. Please try again!',
@@ -50,7 +67,7 @@ function onSubmit(e) {
             progressBar: false,
           });
         } else {
-          galleryRenderer.loader.classList.remove('is-visible');
+          hideLoader();
           galleryRenderer.gallery.insertAdjacentHTML(
             'beforeend',
             createMarkup(data.hits)
@@ -58,7 +75,7 @@ function onSubmit(e) {
           if (data.totalHits <= itemsPerPage) {
             return;
           }
-          galleryRenderer.moreBtn.classList.add('is-visible');
+          showLoadMore();
         }
         lightbox.refresh();
       })
@@ -75,22 +92,19 @@ const lightbox = new SimpleLightbox('.gallery-item-image a', {
 
 function onLoadMore() {
   page += 1;
-  galleryRenderer.moreBtn.disabled = true;
-  galleryRenderer.moreBtn.classList.remove('is-visible');
-  galleryRenderer.loader.classList.add('is-visible');
-
+  hideLoadMore();
+  showLoader();
   getImages(currentQuery, page)
     .then(data => {
       galleryRenderer.gallery.insertAdjacentHTML(
         'beforeend',
         createMarkup(data.hits)
       );
-      galleryRenderer.moreBtn.disabled = false;
-      galleryRenderer.moreBtn.classList.add('is-visible');
-      galleryRenderer.loader.classList.remove('is-visible');
+      showLoadMore();
+      hideLoader();
 
       if (data.totalHits >= itemsPerPage * page) {
-        galleryRenderer.moreBtn.classList.add('is-visible');
+        showLoadMore();
         const galleryCard = document.querySelector('.gallery-item');
         const cardHeight = galleryCard.getBoundingClientRect().height;
         window.scrollBy({
@@ -99,10 +113,9 @@ function onLoadMore() {
           behavior: 'smooth',
         });
         lightbox.refresh();
-
         return;
       }
-      galleryRenderer.moreBtn.classList.remove('is-visible');
+      hideLoadMore();
       iziToast.show({
         message: `❌ We're sorry, but you've reached the end of search results.`,
         color: 'red',
